@@ -966,10 +966,7 @@ static int zevpn_build_hash_table_zns(struct ns *ns,
 					"EVPN hash already present for IF %s(%u) L2-VNI %u",
 					ifp->name, ifp->ifindex, vni);
 
-				/*
-				 * Inform BGP if intf is up and mapped to
-				 * bridge.
-				 */
+				/* Inform BGP if intf is up */
 				if (if_is_operative(ifp))
 					zebra_evpn_send_add_to_client(zevpn);
 
@@ -1016,10 +1013,7 @@ static int zevpn_build_hash_table_zns(struct ns *ns,
 							zl3vni->l2vnis, zevpn);
 				}
 
-				/*
-				 * Inform BGP if intf is up and mapped to
-				 * bridge.
-				 */
+				/* Inform BGP if intf is up */
 				if (if_is_operative(ifp))
 					zebra_evpn_send_add_to_client(zevpn);
 				if (!zif->brslave_info.br_if) {
@@ -4233,7 +4227,6 @@ void zebra_vxlan_remote_vtep_del(ZAPI_HANDLER_ARGS)
 	zebra_evpn_t *zevpn;
 	zebra_vtep_t *zvtep;
 	struct interface *ifp;
-	struct zebra_if *zif;
 
 	if (!is_evpn_enabled()) {
 		zlog_debug(
@@ -4285,10 +4278,9 @@ void zebra_vxlan_remote_vtep_del(ZAPI_HANDLER_ARGS)
 				zevpn->vni, zevpn);
 			continue;
 		}
-		zif = ifp->info;
 
-		/* If down or not mapped to a bridge, we're done. */
-		if (!if_is_operative(ifp) || !zif->brslave_info.br_if)
+		/* If down we're done. */
+		if (!if_is_operative(ifp))
 			continue;
 
 		/* If the remote VTEP does not exist, there's nothing more to
@@ -4371,7 +4363,7 @@ void zebra_vxlan_remote_vtep_add(ZAPI_HANDLER_ARGS)
 		}
 
 
-		/* If down or not mapped to a bridge, we're done. */
+		/* If down we're done. */
 		if (!if_is_operative(ifp))
 			continue;
 
@@ -5051,8 +5043,8 @@ int zebra_vxlan_if_update(struct interface *ifp, uint16_t chgflags)
 		/* Take further actions needed.
 		 * Note that if we are here, there is a change of interest.
 		 */
-		/* If down or not mapped to a bridge, we're done. */
-		if (!if_is_operative(ifp) || !zif->brslave_info.br_if)
+		/* If down we're done. */
+		if (!if_is_operative(ifp))
 			return 0;
 
 		/* Inform BGP, if there is a change of interest. */
@@ -5192,7 +5184,7 @@ int zebra_vxlan_if_add(struct interface *ifp)
 				zif->brslave_info.bridge_ifindex);
 		}
 
-		/* If down or not mapped to a bridge, we're done. */
+		/* If down we're done. */
 		if (!if_is_operative(ifp))
 			return 0;
 
